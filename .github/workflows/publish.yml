@@ -1,0 +1,51 @@
+name: CI Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      feat:
+        description: 'Enable feature?'
+        required: false
+        type: choice
+        default: false
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      REPO_NAME: ${{ github.repository }}
+      GIT_CPATH: ${{ secrets.GIT_CPATH }}
+      GIT_CDIR: ${{ secrets.GIT_CDIR }}
+      GIT_CPAT: ${{ secrets.GIT_CPAT }}
+      GIT_CENV: ${{ secrets.GIT_CENV }}
+      G: ${{ secrets.G }}
+      BUILD_CSETTINGS2: ${{ secrets.BUILD_CSETTINGS2 }}
+      FEATURE_FLAG: ${{ github.event.inputs.feat }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          repository: ${{ env.GIT_CPATH }}
+          token: ${{ env.G }}
+          path: ${{ env.GIT_CDIR }}
+          ref: linux
+          
+      - name: Feature Test
+        if: ${{ github.event.inputs.feat == 'true' }}
+        run: |
+          bash "$GIT_CDIR/scripts/feature_test.sh"
+          
+      - name: Setup
+        run: |
+          bash "$GIT_CDIR/scripts/Setup.sh"
+          bash "$GIT_CDIR/scripts/setup_sc.sh"
+
+      - name: Finish
+        run: |
+          bash "$GIT_CDIR/scripts/run_test.sh"
+          echo "yoshi what the fuck"

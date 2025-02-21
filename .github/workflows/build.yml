@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      feat:
+        description: 'Enable feature?'
+        required: false
+        type: choice
+        default: false
+        options:
+          - true
+          - false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      REPO_NAME: ${{ github.repository }}
+      GIT_CPATH: ${{ secrets.GIT_CPATH }}
+      GIT_CDIR: ${{ secrets.GIT_CDIR }}
+      GIT_CPAT: ${{ secrets.GIT_CPAT }}
+      GIT_CENV: ${{ secrets.GIT_CENV }}
+      G: ${{ secrets.G }}
+      BUILD_CSETTINGS: ${{ secrets.BUILD_CSETTINGS }}
+      FEATURE_FLAG: ${{ github.event.inputs.feat }}
+
+    steps:
+      - name: Feature Test
+        if: ${{ github.event.inputs.feat == true }}
+        run: |
+          & .\$env:GIT_CDIR\scripts\feature_test.ps1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          repository: ${{ env.GIT_CPATH }}
+          token: ${{ env.G }}
+          path: ${{ env.GIT_CDIR }}
+          ref: win64
+
+      - name: Setup
+        run: |
+         & .\$env:GIT_CDIR\scripts\Setup.ps1
+         & .\$env:GIT_CDIR\scripts\setup_sc.ps1
+
+      - name: Finish
+        run: |
+          & .\$env:GIT_CDIR\scripts\run_test.ps1
+          & Write-Host "yoshi what the fuck"
